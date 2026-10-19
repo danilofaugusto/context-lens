@@ -4,7 +4,6 @@
 [![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A5%2020.4-green.svg)](https://nodejs.org)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-brightgreen.svg)](#)
 [![Offline Ready](https://img.shields.io/badge/CDN-None%20(Self--Contained)-blue.svg)](#)
-[![CSP](https://img.shields.io/badge/CSP-self--only-brightgreen.svg)](#security--architecture)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > Real-time context window usage breakdown, token allocation HUD, and next-message forecast for Google Antigravity Desktop sessions. Requires **Antigravity Desktop 2.24.0 or later**.
@@ -70,17 +69,6 @@ When your conversation gets long and nears the model's token capacity, Antigravi
 The code uses only `node:path`, `node:fs` and `os.homedir()`, with no native modules and no platform-specific commands. On macOS and Linux it assumes Antigravity uses the same `~/.gemini/antigravity/brain` layout as on Windows, which is not documented.
 
 **macOS tip:** apps launched from the Dock or Finder may not see a `node` installed through Homebrew or nvm. If the side pane stays blank, make sure `node` is available system-wide (for example, the installer from [nodejs.org](https://nodejs.org)).
-
----
-
-## Security & Architecture
-
-- **Content Security Policy (CSP)**: Served with `default-src 'self'` and `connect-src 'self'`, so the page cannot load or send anything outside the sidecar. Inline scripts and styles are allowed (`'unsafe-inline'`) because the HUD is a single self-contained HTML file. Also sends `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
-- **Unobtrusive DOM Event Model**: No inline event handlers (`onclick`); standard event listeners and data-attribute delegation instead. All rendered text is HTML-escaped.
-- **Directory Traversal Protection**: Conversation IDs are restricted to `[a-zA-Z0-9_-]` and checked against a strict path prefix (case-insensitive on Windows).
-- **Denial-of-Service Defense**: Enforces a 50MB safety limit on transcript parsing to prevent memory exhaustion on giant log files.
-- **Privacy Path Redaction**: Your home directory is shown as `~` in session locations.
-- **Caching**: In-memory LRU/TTL caching (with 3-second caching of session listings) avoids re-reading files on every poll.
 
 ---
 
@@ -179,50 +167,6 @@ Customize context window targets and paths in `sidecars/lens/lens.config.json`:
 - `workspaceDirs`: Extra workspace folders to scan for `AGENTS.md`, `GEMINI.md` and `.agents/rules/*.md`, used when Antigravity does not report the open workspace.
 - `autocompactThreshold`: Optional marker on the usage bar. A value up to `1` is a fraction of the window (for example `0.8`); a larger value is a token count. `null` hides it.
 - `brainDir`: Explicit path override for Antigravity conversation storage (defaults to `~/.gemini/antigravity/brain`).
-
----
-
-## Directory Structure
-
-```text
-context-lens/
-├── plugin.json                    # Antigravity plugin manifest
-├── README.md                      # Documentation
-├── LICENSE                        # MIT license
-├── .gitignore
-├── assets/
-│   └── context-lens-hud.png       # Preview screenshot
-├── skills/
-│   └── context-lens/
-│       └── SKILL.md               # Agent skill definition & sidecar link
-└── sidecars/
-    └── lens/
-        ├── sidecar.json           # Sidecar registration for auxiliary pane
-        ├── lens.config.json       # Window thresholds & model definitions
-        ├── package.json           # Native ESM manifest
-        ├── server.mjs             # Sidecar HTTP server & API endpoints
-        ├── index.html             # Real-time HUD interface
-        ├── lib/
-        │   ├── parse.mjs          # Session transcript parser
-        │   ├── scan.mjs           # Rules, skills & agent scanner
-        │   ├── breakdown.mjs      # Token categorization engine
-        │   ├── forecast.mjs       # Next-turn predictor & backtester
-        │   ├── stats.mjs          # Response assembly for the HUD
-        │   ├── paths.mjs          # Safe conversation path resolution
-        │   └── cache.mjs          # In-memory LRU/TTL caching
-        └── test/
-            ├── audit-bugs.test.mjs
-            ├── audit-fixes.test.mjs
-            ├── breakdown.test.mjs
-            ├── forecast.test.mjs
-            ├── parse.test.mjs
-            ├── paths-cache.test.mjs
-            ├── proposed-bugs.test.mjs
-            ├── proposed-strength.test.mjs
-            ├── scan.test.mjs
-            ├── stats.test.mjs
-            └── verify-invariants.test.mjs
-```
 
 ---
 
