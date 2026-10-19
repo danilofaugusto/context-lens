@@ -1,0 +1,12 @@
+{
+  "name": "context-lens-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.4"
+  }
+}

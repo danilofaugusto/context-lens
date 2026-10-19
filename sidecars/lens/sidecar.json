@@ -1,0 +1,17 @@
+{
+  "display_name": "Context Lens",
+  "description": "Visual context window monitor, token allocation HUD, and next-message forecast. Requires Antigravity Desktop 2.24.0+.",
+  "has_web_ui": true,
+  "command": "node",
+  "args": ["server.mjs"],
+  "restart_policy": "always",
+  "ui_config": {
+    "views": [
+      {
+        "title": "Context Lens",
+        "entrypoint": "SIDECAR_UI_ENTRYPOINT_AUX_PANE",
+        "path": "/"
+      }
+    ]
+  }
+}

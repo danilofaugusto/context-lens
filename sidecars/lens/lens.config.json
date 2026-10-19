@@ -1,0 +1,16 @@
+{
+  "defaultWindow": 1048576,
+  "windows": {
+    "Gemini 4": 1048576,
+    "Gemini 3.8": 1048576,
+    "Gemini 3": 1048576,
+    "Gemini 2.5": 1048576,
+    "Claude Opus 5.5": 1000000,
+    "Claude Opus": 1000000,
+    "Claude Sonnet": 200000,
+    "Claude Haiku": 200000
+  },
+  "workspaceDirs": [],
+  "autocompactThreshold": null,
+  "brainDir": null
+}

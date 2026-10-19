@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Context Lens</title>
+  <script src="/preload.js"></script>
+  <style>
+    *, ::before, ::after {
+      box-sizing: border-box;
+      border-width: 0;
+      border-style: solid;
+      border-color: var(--border, #27272a);
+    }
+    html, body {
+      margin: 0;
+      min-height: 100vh;
+    }
+    body {
+      background-color: var(--background, #09090b) !important;
+      color: var(--foreground, #f4f4f5) !important;
+      padding: 1rem !important;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      line-height: 1.5;
+    }
+    h1 { margin: 0; }
+    button, select {
+      font-family: inherit;
+      font-size: 100%;
+      line-height: inherit;
+      color: inherit;
+      margin: 0;
+      padding: 0;
+      background-color: transparent;
+      background-image: none;
+    }
+    svg { display: block; vertical-align: middle; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border, #333);
+      border-radius: 4px;
+    }
+
+    /* Layout & Sizing */
+    .max-w-md { max-width: 28rem; }
+    .max-w-\[110px\] { max-width: 110px; }
+    .max-w-\[120px\] { max-width: 120px; }
+    .max-w-\[130px\] { max-width: 130px; }
+    .max-w-\[210px\] { max-width: 210px; }
+    .max-h-48 { max-height: 12rem; }
+    .min-h-screen { min-height: 100vh; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .w-full { width: 100%; }
+    .w-12 { width: 3rem; }
+    .w-3\.5 { width: 0.875rem; }
+    .h-3\.5 { height: 0.875rem; }
+    .w-2\.5 { width: 0.625rem; }
+    .h-2\.5 { height: 0.625rem; }
+    .w-2 { width: 0.5rem; }
+    .h-2 { height: 0.5rem; }
+    .w-1\.5 { width: 0.375rem; }
+    .h-1\.5 { height: 0.375rem; }
+    .shrink-0 { flex-shrink: 0; }
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .items-baseline { align-items: baseline; }
+    .justify-between { justify-content: space-between; }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hidden { display: none !important; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .overflow-hidden { overflow: hidden; }
+    .overflow-y-auto { overflow-y: auto; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Spacing */
+    .gap-1 { gap: 0.25rem; }
+    .gap-1\.5 { gap: 0.375rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-x-3 { column-gap: 0.75rem; }
+    .gap-y-1 { row-gap: 0.25rem; }
+    .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+    .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
+    .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
+    .space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.375rem; }
+    .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
+    .space-y-0\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.125rem; }
+    .p-4 { padding: 1rem; }
+    .p-3 { padding: 0.75rem; }
+    .p-2\.5 { padding: 0.625rem; }
+    .p-2 { padding: 0.5rem; }
+    .p-1\.5 { padding: 0.375rem; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+    .px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+    .py-0\.2 { padding-top: 0.05rem; padding-bottom: 0.05rem; }
+    .pt-2 { padding-top: 0.5rem; }
+    .pt-1 { padding-top: 0.25rem; }
+    .pt-0\.5 { padding-top: 0.125rem; }
+    .pb-2 { padding-bottom: 0.5rem; }
+    .pb-1\.5 { padding-bottom: 0.375rem; }
+    .pl-4\.5 { padding-left: 1.125rem; }
+    .pl-4 { padding-left: 1rem; }
+    .pr-1 { padding-right: 0.25rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-0\.5 { margin-top: 0.125rem; }
+    .ml-1\.5 { margin-left: 0.375rem; }
+    .ml-1 { margin-left: 0.25rem; }
+
+    /* Borders & Shadows */
+    .border { border-width: 1px; }
+    .border-b { border-bottom-width: 1px; }
+    .border-t { border-top-width: 1px; }
+    .border-l { border-left-width: 1px; }
+    .border-\[var\(--border\,\#27272a\)\] { border-color: var(--border, #27272a); }
+    .border-\[var\(--border\,\#3f3f46\)\] { border-color: var(--border, #3f3f46); }
+    .border-amber-500\/20 { border-color: rgba(245, 158, 11, 0.2); }
+    .border-blue-500\/20 { border-color: rgba(59, 130, 246, 0.2); }
+    .border-zinc-800\/40 { border-color: rgba(39, 39, 42, 0.4); }
+    .rounded-full { border-radius: 9999px; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded { border-radius: 0.25rem; }
+    .rounded-sm { border-radius: 0.125rem; }
+    .outline-none { outline: 2px solid transparent; outline-offset: 2px; }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -4px rgba(0, 0, 0, 0.25); }
+
+    /* Typography */
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .text-\[11px\] { font-size: 11px; line-height: 1rem; }
+    .text-\[10px\] { font-size: 10px; line-height: 0.875rem; }
+    .text-\[9px\] { font-size: 9px; line-height: 0.75rem; }
+    .font-bold { font-weight: 700; }
+    .font-semibold { font-weight: 600; }
+    .font-medium { font-weight: 500; }
+    .font-normal { font-weight: 400; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wide { letter-spacing: 0.025em; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+
+    /* Colors & Backgrounds */
+    .bg-\[var\(--background\,\#09090b\)\] { background-color: var(--background, #09090b); }
+    .bg-\[var\(--card\,\#18181b\)\] { background-color: var(--card, #18181b); }
+    .bg-\[var\(--secondary\,\#27272a\)\] { background-color: var(--secondary, #27272a); }
+    .bg-\[var\(--secondary\,\#27272a\)\]\/60 { background-color: color-mix(in srgb, var(--secondary, #27272a) 60%, transparent); }
+    .bg-\[var\(--primary\,\#3b82f6\)\]\/10 { background-color: color-mix(in srgb, var(--primary, #3b82f6) 10%, transparent); }
+    .bg-zinc-800 { background-color: #27272a; }
+    .bg-emerald-500 { background-color: #10b981; }
+    .bg-amber-500 { background-color: #f59e0b; }
+    .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1); }
+    .bg-blue-500 { background-color: #3b82f6; }
+    .bg-cyan-500 { background-color: #06b6d4; }
+    .bg-indigo-400 { background-color: #818cf8; }
+    .bg-purple-400 { background-color: #c084fc; }
+    .bg-teal-400 { background-color: #2dd4bf; }
+    .text-\[var\(--foreground\,\#f4f4f5\)\] { color: var(--foreground, #f4f4f5); }
+    .text-\[var\(--muted-foreground\,\#a1a1aa\)\] { color: var(--muted-foreground, #a1a1aa); }
+    .text-\[var\(--muted-foreground\,\#71717a\)\] { color: var(--muted-foreground, #71717a); }
+    .text-white { color: #ffffff; }
+    .text-zinc-300 { color: #d4d4d8; }
+    .text-zinc-400 { color: #a1a1aa; }
+    .text-zinc-500 { color: #71717a; }
+    .text-amber-300 { color: #fcd34d; }
+    .text-blue-400 { color: #60a5fa; }
+    .text-blue-300\/80 { color: rgba(147, 197, 253, 0.8); }
+    .text-indigo-400 { color: #818cf8; }
+    .text-emerald-400 { color: #34d399; }
+    .text-emerald-300 { color: #6ee7b7; }
+
+    /* Interactivity & Animations */
+    .cursor-pointer { cursor: pointer; }
+    .cursor-help { cursor: help; }
+    .hover\:text-white:hover { color: #ffffff; }
+    .hover\:bg-\[var\(--accent\,\#3f3f46\)\]:hover { background-color: var(--accent, #3f3f46); }
+    .hover\:bg-\[var\(--accent\,\#27272a\)\]\/40:hover { background-color: color-mix(in srgb, var(--accent, #27272a) 40%, transparent); }
+    .hover\:bg-white\/5:hover { background-color: rgba(255, 255, 255, 0.05); }
+    .transition-colors { transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease; }
+    .transition-all { transition: all 300ms ease; }
+    .duration-300 { transition-duration: 300ms; }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
+<body class="bg-[var(--background,#09090b)] text-[var(--foreground,#f4f4f5)] antialiased p-4 select-none font-sans min-h-screen">
+  <div class="max-w-md mx-auto space-y-4">
+    
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between pb-2 border-b border-[var(--border,#27272a)] gap-2">
+      <div class="flex items-center gap-2 shrink-0" title="Context Lens: real-time LLM context inspector">
+        <span id="live-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <h1 class="text-sm font-semibold tracking-wide uppercase text-[var(--foreground,#f4f4f5)]">Context Lens</h1>
+        <span id="model-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono truncate max-w-[120px]">—</span>
+      </div>
+
+      <div class="flex items-center gap-1.5 overflow-hidden">
+        <!-- Session selector / recent sessions dropdown -->
+        <select id="session-select" title="Switch session focus (default: Follow active session)" class="bg-[var(--secondary,#27272a)] text-zinc-300 text-[10px] font-mono rounded px-1.5 py-1 border border-[var(--border,#3f3f46)] outline-none max-w-[110px] truncate cursor-pointer">
+          <option value="">Auto (Active)</option>
+        </select>
+
+        <!-- Clickable Conversation ID Badge (Copies full folder path) -->
+        <button id="conv-badge" title="Click to copy full session folder path" class="font-mono text-[10px] text-[var(--muted-foreground,#a1a1aa)] hover:text-white max-w-[130px] truncate bg-[var(--secondary,#27272a)] hover:bg-[var(--accent,#3f3f46)] px-2 py-1 rounded transition-colors flex items-center gap-1 cursor-pointer shrink-0">
+          <svg class="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <span id="conv-text">session</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Warnings Banner -->
+    <div id="warnings-banner" class="hidden p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] space-y-1"></div>
+
+    <!-- Usage summary & segmented bar -->
+    <div class="bg-[var(--card,#18181b)] border border-[var(--border,#27272a)] rounded-xl p-4 shadow-lg space-y-3">
+      <div class="flex items-baseline justify-between">
+        <div>
+          <span id="percent-used" class="text-2xl font-bold tracking-tight">—</span>
+          <span class="text-xs text-[var(--muted-foreground,#a1a1aa)] ml-1">used</span>
+        </div>
+        <div id="token-ratio" class="text-[var(--muted-foreground,#a1a1aa)] font-mono text-xs">— / —</div>
+      </div>
+
+      <!-- Segmented Bar (proportional against total context window) -->
+      <div class="relative">
+        <div id="segmented-bar" class="h-2.5 w-full bg-[var(--secondary,#27272a)] rounded-full overflow-hidden flex" title="Segmented utilization against total context window capacity">
+          <!-- Segments inserted dynamically -->
+        </div>
+        <div id="autocompact-marker" class="hidden absolute" style="top: -3px; bottom: -3px; width: 2px; background: #f87171;"></div>
+      </div>
+      <div id="autocompact-note" class="hidden text-[10px] text-zinc-500 font-mono"></div>
+
+      <!-- Dynamic Legend -->
+      <div id="legend-container" class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[var(--muted-foreground,#a1a1aa)] pt-1">
+        <!-- Legend items inserted dynamically -->
+      </div>
+    </div>
+
+    <!-- Category Breakdown List (Collapsible with state retention) -->
+    <div id="categories-container" class="bg-[var(--card,#18181b)] border border-[var(--border,#27272a)] rounded-xl p-3 shadow-lg space-y-1.5 text-xs">
+      <!-- Dynamic categories rendered here -->
+    </div>
+
+    <!-- Next Message Forecast Card -->
+    <div class="p-2.5 rounded-lg bg-[var(--primary,#3b82f6)]/10 border border-blue-500/20 text-blue-400 space-y-1">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 font-semibold text-xs">
+          <span class="w-2.5 h-2.5 rounded-sm bg-teal-400 animate-pulse"></span>
+          <span>Forecast Next Message</span>
+        </div>
+        <div id="val-forecast-delta" class="font-mono text-xs font-bold">—</div>
+      </div>
+      <div class="text-[11px] text-blue-300/80 flex items-center justify-between pl-4.5">
+        <span>Predicted total context:</span>
+        <span id="val-landing" class="font-mono font-bold text-white">—</span>
+      </div>
+    </div>
+
+    <!-- Previous Forecast vs Actual Context Card -->
+    <div class="bg-[var(--card,#18181b)] border border-[var(--border,#27272a)] rounded-xl p-3 shadow-lg text-xs space-y-2">
+      <div class="flex items-center justify-between border-b border-[var(--border,#27272a)] pb-1.5">
+        <span class="font-semibold text-[var(--foreground,#f4f4f5)] flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Previous Verification
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-0.5">
+        <!-- Previous Forecast Box -->
+        <div class="bg-[var(--secondary,#27272a)]/60 border border-[var(--border,#27272a)] rounded-lg p-2 space-y-0.5">
+          <div class="text-[10px] text-[var(--muted-foreground,#a1a1aa)] font-medium">Previous Forecast</div>
+          <div id="stat-prev-forecast" class="text-sm font-bold font-mono text-zinc-300">—</div>
+          <div class="text-[10px] text-zinc-500 font-mono">predicted</div>
+        </div>
+
+        <!-- Actual Context Box -->
+        <div class="bg-[var(--secondary,#27272a)]/60 border border-[var(--border,#27272a)] rounded-lg p-2 space-y-0.5">
+          <div class="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Actual Context
+          </div>
+          <div id="stat-actual-context" class="text-sm font-bold font-mono text-emerald-300">—</div>
+          <div id="stat-variance-text" class="text-[10px] text-zinc-400 font-mono">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="bg-[var(--card,#18181b)] border border-[var(--border,#27272a)] rounded-xl p-3 shadow-lg space-y-2 text-xs">
+      <div class="font-semibold text-[var(--foreground,#f4f4f5)]">Session Actions</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-compact" title="Trigger context compaction (/compact) to summarize history" class="p-2 rounded bg-[var(--secondary,#27272a)] hover:bg-[var(--accent,#3f3f46)] transition-colors text-left cursor-pointer">
+          <div class="font-medium text-[var(--foreground,#f4f4f5)]">Compact Session</div>
+          <div class="text-[10px] text-[var(--muted-foreground,#a1a1aa)] mt-0.5">Compress prior messages</div>
+        </button>
+        <button id="btn-refresh" title="Recalculate token telemetry for the active session" class="p-2 rounded bg-[var(--secondary,#27272a)] hover:bg-[var(--accent,#3f3f46)] transition-colors text-left cursor-pointer">
+          <div class="font-medium text-[var(--foreground,#f4f4f5)]">Refresh Calculation</div>
+          <div class="text-[10px] text-[var(--muted-foreground,#a1a1aa)] mt-0.5">Poll current session</div>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Formatting helpers
+    const fmt = n => Number.isFinite(n) ? Math.round(n).toLocaleString('en-US') : '—';
+    const pct = (n, w) => (Number.isFinite(n) && Number.isFinite(w) && w > 0)
+      ? ((n / w) * 100).toFixed(1) + '%'
+      : '—';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
+    const COLOR_CLASSES = {
+      blue: { bg: 'bg-blue-500', dot: 'bg-blue-500' },
+      emerald: { bg: 'bg-emerald-500', dot: 'bg-emerald-500' },
+      amber: { bg: 'bg-amber-500', dot: 'bg-amber-500' },
+      cyan: { bg: 'bg-cyan-500', dot: 'bg-cyan-500' },
+      indigo: { bg: 'bg-indigo-400', dot: 'bg-indigo-400' },
+      purple: { bg: 'bg-purple-400', dot: 'bg-purple-400' }
+    };
+
+    // State retention across polls
+    const expandedIds = new Set();
+    let currentData = null;
+    let currentBrainPath = '';
+    let manualSessionId = null;
+    let recentConversations = [];
+
+    function apiFetch(url, payload = {}) {
+      const fn = window.sidecar?.fetch || fetch;
+      return fn(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    function getActiveConversationId() {
+      if (manualSessionId) return manualSessionId;
+      const urlConvId = hostConversationId();
+      if (urlConvId) return urlConvId;
+      // Host gave no session id: fall back to the most recently modified transcript.
+      if (recentConversations.length > 0) return recentConversations[0].id;
+      return '';
+    }
+
+    function toggleCategory(catId) {
+      if (expandedIds.has(catId)) {
+        expandedIds.delete(catId);
+      } else {
+        expandedIds.add(catId);
+      }
+      if (currentData) {
+        renderCategories(currentData);
+      }
+    }
+
+    async function copySessionPath() {
+      const path = currentBrainPath || currentData?.brainPath || '';
+      if (!path) return;
+
+      try {
+        await navigator.clipboard.writeText(path);
+        const textSpan = document.getElementById('conv-text');
+        const prev = textSpan.textContent;
+        textSpan.textContent = 'Copied Path!';
+        setTimeout(() => { textSpan.textContent = prev; }, 1800);
+      } catch (err) {
+        window.prompt('Session folder path:', path);
+      }
+    }
+
+    async function onSessionSelectChange() {
+      const select = document.getElementById('session-select');
+      manualSessionId = select.value || null;
+      await fetchStats();
+    }
+
+    async function fetchRecentConversations() {
+      try {
+        const res = await apiFetch('/api/conversations/recent');
+        if (!res.ok) return;
+        const list = await res.json();
+        if (Array.isArray(list)) {
+          recentConversations = list;
+          updateSessionSelectDropdown();
+        }
+      } catch {}
+    }
+
+    let lastDropdownKey = '';
+
+    function hostConversationId() {
+      return window.sidecar?.conversationId || new URLSearchParams(window.location.search).get('conversationId') || '';
+    }
+
+    function updateSessionSelectDropdown() {
+      const select = document.getElementById('session-select');
+      // Rebuilding while the user has the list open closes it, so skip that and unchanged lists.
+      if (document.activeElement === select) return;
+      const autoLabel = hostConversationId() ? 'Auto (Active)' : 'Auto (Latest)';
+      const key = autoLabel + '|' + (manualSessionId || '') + '|' + recentConversations.map(c => c.id).join(',');
+      if (key === lastDropdownKey) return;
+      lastDropdownKey = key;
+      let optionsHtml = `<option value="">${autoLabel}</option>`;
+      for (const conv of recentConversations) {
+        const shortId = conv.id.slice(0, 8);
+        const isSelected = (manualSessionId === conv.id) ? 'selected' : '';
+        optionsHtml += `<option value="${esc(conv.id)}" ${isSelected}>${esc(shortId)}</option>`;
+      }
+      select.innerHTML = optionsHtml;
+      if (manualSessionId) {
+        select.value = manualSessionId;
+      }
+    }
+
+    let compactArmedTimer = null;
+
+    // Two-click confirm: window.confirm() can be blocked inside the sidecar frame.
+    async function triggerCompact() {
+      const btn = document.getElementById('btn-compact');
+      const label = btn.querySelector('div');
+      if (!compactArmedTimer) {
+        label.textContent = 'Click again to compact';
+        compactArmedTimer = setTimeout(() => {
+          compactArmedTimer = null;
+          label.textContent = 'Compact Session';
+        }, 4000);
+        return;
+      }
+      clearTimeout(compactArmedTimer);
+      compactArmedTimer = null;
+      label.textContent = 'Compact Session';
+
+      const convId = getActiveConversationId();
+      try {
+        if (window.sidecar?.agent?.sendMessage && typeof window.sidecar.agent.sendMessage === 'function') {
+          await window.sidecar.agent.sendMessage('/compact', convId);
+          showWarning('Compaction request (/compact) sent to agent.');
+        } else {
+          showWarning('Sidecar messaging API unavailable in current preview frame.');
+        }
+      } catch (err) {
+        showWarning('Failed sending /compact: ' + err.message);
+      }
+    }
+
+    function showWarning(msg) {
+      const banner = document.getElementById('warnings-banner');
+      banner.textContent = msg;
+      banner.classList.remove('hidden');
+      setTimeout(() => { banner.classList.add('hidden'); }, 4000);
+    }
+
+    let statsInFlight = null;
+
+    // Polls, the Refresh button and workspace changes share one in-flight request.
+    function fetchStats() {
+      if (!statsInFlight) {
+        statsInFlight = doFetchStats().finally(() => { statsInFlight = null; });
+      }
+      return statsInFlight;
+    }
+
+    async function doFetchStats() {
+      await fetchRecentConversations();
+      const convId = getActiveConversationId();
+
+      const textSpan = document.getElementById('conv-text');
+      if (convId) {
+        textSpan.textContent = convId.substring(0, 8) + '...';
+      }
+
+      let workspaceDirs = [];
+      try {
+        if (window.sidecar?.getWorkspaceUris) {
+          workspaceDirs = await window.sidecar.getWorkspaceUris();
+        }
+      } catch {}
+
+      try {
+        const res = await apiFetch('/api/context-stats', {
+          conversationId: convId,
+          workspaceDirs
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data) {
+          currentData = data;
+          if (data.brainPath) currentBrainPath = data.brainPath;
+          updateUI(data);
+        }
+      } catch (err) {
+        console.error('Failed fetching stats:', err);
+      }
+    }
+
+    function updateUI(data) {
+      // Model badge
+      const modelBadge = document.getElementById('model-badge');
+      if (data.model) {
+        modelBadge.textContent = data.model;
+        modelBadge.title = `Active Model: ${data.model}`;
+      } else {
+        modelBadge.textContent = '—';
+      }
+
+      // Usage Header
+      const total = data.total;
+      const windowTokens = data.window || 1048576;
+      document.getElementById('percent-used').textContent = pct(total, windowTokens);
+      document.getElementById('token-ratio').textContent = `${fmt(total)} / ${fmt(windowTokens)}`;
+
+      // Warnings
+      const banner = document.getElementById('warnings-banner');
+      if (data.warnings && data.warnings.length > 0) {
+        banner.innerHTML = data.warnings.map(w => `<div>${esc(w)}</div>`).join('');
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+
+      // Proportional Segmented Bar
+      const barContainer = document.getElementById('segmented-bar');
+      const legendContainer = document.getElementById('legend-container');
+      const categories = data.categories || [];
+
+      let barHtml = '';
+      let legendHtml = '';
+
+      for (const cat of categories) {
+        if (!cat.tokens || cat.tokens <= 0) continue;
+        const colorStyle = COLOR_CLASSES[cat.color] || COLOR_CLASSES.blue;
+        const widthPct = Math.max((cat.tokens / windowTokens) * 100, 0.4).toFixed(2);
+
+        barHtml += `<div style="width: ${widthPct}%" class="${colorStyle.bg} transition-all duration-300" title="${esc(cat.label)}: ${fmt(cat.tokens)} (${pct(cat.tokens, windowTokens)})"></div>`;
+        legendHtml += `
+          <span class="flex items-center gap-1 cursor-help" title="${esc(cat.label)}: ${fmt(cat.tokens)} (${pct(cat.tokens, windowTokens)})">
+            <span class="w-2 h-2 rounded-full ${colorStyle.dot}"></span>
+            ${esc(cat.label.split(' ')[0])}
+          </span>
+        `;
+      }
+      barContainer.innerHTML = barHtml;
+      legendContainer.innerHTML = legendHtml;
+
+      // Autocompact threshold: <= 1 is a fraction of the window, larger is a token count.
+      const marker = document.getElementById('autocompact-marker');
+      const note = document.getElementById('autocompact-note');
+      const ac = Number(data.autocompact);
+      const acTokens = Number.isFinite(ac) && ac > 0 ? (ac <= 1 ? ac * windowTokens : ac) : null;
+      if (acTokens !== null && acTokens <= windowTokens) {
+        const leftPct = (acTokens / windowTokens) * 100;
+        marker.style.left = `calc(${leftPct.toFixed(2)}% - 1px)`;
+        marker.title = `Autocompact at ${fmt(acTokens)} tokens`;
+        marker.classList.remove('hidden');
+        const remaining = Number.isFinite(total) ? acTokens - total : null;
+        note.textContent = `Autocompact at ${fmt(acTokens)} (${pct(acTokens, windowTokens)})` +
+          (remaining !== null ? (remaining > 0 ? ` · ${fmt(remaining)} to go` : ' · reached') : '');
+        note.classList.remove('hidden');
+      } else {
+        marker.classList.add('hidden');
+        note.classList.add('hidden');
+      }
+
+      // Render Categories Breakdown List
+      renderCategories(data);
+
+      // Forecast Next Message
+      const fNext = data.forecast?.next;
+      const fDelta = data.forecast?.delta;
+      const fDeltaText = fDelta !== null && Number.isFinite(fDelta)
+        ? (fDelta >= 0 ? '+' : '') + fmt(fDelta)
+        : '—';
+      document.getElementById('val-forecast-delta').textContent = fDeltaText;
+      document.getElementById('val-landing').textContent = fNext !== null ? fmt(fNext) : '—';
+
+      // Previous Verification
+      const v = data.verification || {};
+      document.getElementById('stat-prev-forecast').textContent = fmt(v.forecast);
+      document.getElementById('stat-actual-context').textContent = fmt(v.actual);
+
+      const varianceEl = document.getElementById('stat-variance-text');
+      if (v.delta !== null && Number.isFinite(v.delta) && v.errorPct !== null) {
+        const sign = v.delta >= 0 ? '+' : '';
+        varianceEl.textContent = `${sign}${fmt(v.delta)} (${v.errorPct}%)`;
+      } else {
+        varianceEl.textContent = '—';
+      }
+    }
+
+    function renderCategories(data) {
+      const container = document.getElementById('categories-container');
+      const categories = data.categories || [];
+      const windowTokens = data.window || 1048576;
+
+      let html = '';
+      for (const cat of categories) {
+        const colorStyle = COLOR_CLASSES[cat.color] || COLOR_CLASSES.blue;
+        const hasItems = Array.isArray(cat.items) && cat.items.length > 0;
+        const isExpanded = expandedIds.has(cat.id);
+        const cursorClass = hasItems ? 'cursor-pointer hover:bg-[var(--accent,#27272a)]/40' : '';
+        const toggleAttr = hasItems ? `data-cat-toggle="${esc(cat.id)}"` : '';
+
+        html += `
+          <div class="p-1.5 rounded transition-colors ${cursorClass}" ${toggleAttr} title="${hasItems ? 'Click to toggle itemized list' : esc(cat.label)}">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <span class="w-2.5 h-2.5 rounded-sm ${colorStyle.bg} shrink-0"></span>
+                <span class="font-medium truncate">${esc(cat.label)}</span>
+                <span class="text-[9px] px-1 py-0.2 rounded bg-zinc-800 text-zinc-400 font-mono shrink-0">${esc(cat.kind)}</span>
+                ${hasItems ? `<span class="text-[10px] text-zinc-500 font-mono shrink-0">(${cat.items.length})</span>` : ''}
+              </div>
+              <div class="flex items-center gap-2 font-mono text-[11px] shrink-0">
+                <span class="text-[var(--muted-foreground,#a1a1aa)]">${fmt(cat.tokens)}</span>
+                <span class="font-semibold w-12 text-right">${pct(cat.tokens, windowTokens)}</span>
+              </div>
+            </div>
+        `;
+
+        if (hasItems) {
+          html += `
+            <div id="sub-${esc(cat.id)}" class="${isExpanded ? '' : 'hidden'} mt-2 pl-4 pr-1 py-1 space-y-1 text-[11px] text-[var(--muted-foreground,#a1a1aa)] font-mono border-l border-[var(--border,#3f3f46)] ml-1.5 max-h-48 overflow-y-auto">
+              ${cat.items.map(item => `
+                <div class="flex justify-between items-center py-1 px-1 rounded hover:bg-white/5 transition-colors border-b border-zinc-800/40" title="${esc(item.hint || item.label)}">
+                  <span class="truncate max-w-[210px] text-zinc-300 font-normal">${esc(item.label)}</span>
+                  <span class="text-zinc-400 font-mono text-right shrink-0">${fmt(item.tokens)}</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        html += `</div>`;
+      }
+
+      // Available window row at bottom of breakdown
+      const freeTokens = data.free;
+      html += `
+        <div class="flex items-center justify-between p-1.5 text-[var(--muted-foreground,#71717a)] border-t border-[var(--border,#27272a)] pt-2" title="Remaining available token headroom in the context window">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-sm bg-zinc-800"></span>
+            <span>Available window</span>
+          </div>
+          <div class="font-mono text-[11px]">${fmt(freeTokens)} free (${pct(freeTokens, windowTokens)})</div>
+        </div>
+      `;
+
+      // Keep each expanded list's scroll position across the 3s re-render.
+      const scrollTops = {};
+      container.querySelectorAll('[id^="sub-"]').forEach(el => { scrollTops[el.id] = el.scrollTop; });
+      container.innerHTML = html;
+      for (const [id, top] of Object.entries(scrollTops)) {
+        const el = document.getElementById(id);
+        if (el) el.scrollTop = top;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('session-select')?.addEventListener('change', onSessionSelectChange);
+      document.getElementById('conv-badge')?.addEventListener('click', copySessionPath);
+      document.getElementById('btn-compact')?.addEventListener('click', triggerCompact);
+      document.getElementById('btn-refresh')?.addEventListener('click', fetchStats);
+
+      const catContainer = document.getElementById('categories-container');
+      if (catContainer) {
+        catContainer.addEventListener('click', (ev) => {
+          const trigger = ev.target.closest('[data-cat-toggle]');
+          if (trigger) {
+            const catId = trigger.getAttribute('data-cat-toggle');
+            if (catId) toggleCategory(catId);
+          }
+        });
+      }
+
+      fetchStats();
+      if (window.sidecar?.onWorkspaceChange) {
+        window.sidecar.onWorkspaceChange(() => {
+          fetchStats();
+        });
+      }
+      setInterval(fetchStats, 3000);
+    });
+  </script>
+</body>
+</html>
